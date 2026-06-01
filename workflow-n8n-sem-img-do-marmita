@@ -9,27 +9,12 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -784,
-        0
+        -976,
+        -16
       ],
       "id": "378b06cc-9233-438e-930a-4da1caf39018",
       "name": "Webhook",
       "webhookId": "3d6c414c-1339-4ccf-8412-c1e4e37fa398"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "aqui vou colocar o conversasion que é a mensagem que vai ser recebida",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        -576,
-        0
-      ],
-      "id": "f8e3e267-3117-40aa-85d6-4cde199b91c7",
-      "name": "AI Agent"
     },
     {
       "parameters": {
@@ -39,8 +24,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1.1,
       "position": [
-        -576,
-        160
+        176,
+        320
       ],
       "id": "dc255fcc-0ca6-47b4-9336-7691bbfaf4de",
       "name": "Google Gemini Chat Model",
@@ -59,11 +44,220 @@
       "type": "n8n-nodes-evolution-api.evolutionApi",
       "typeVersion": 1,
       "position": [
-        -288,
-        0
+        512,
+        128
       ],
       "id": "dd2d8212-3213-489a-b5a8-046b807f6965",
       "name": "Enviar texto"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4f9a24e5-c568-4c55-a35e-4adce19faab9",
+              "name": "From",
+              "value": "={{ $json.body.From }}",
+              "type": "string"
+            },
+            {
+              "id": "b5cdfbfb-ee7e-4662-a90d-021cc66c1183",
+              "name": "name",
+              "value": "={{ $json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "8ff3fa8a-894c-4321-953e-6d9f68c6a37f",
+              "name": "instance",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "57f1a778-db47-42ae-8f54-9b15d3def938",
+              "name": "messageType",
+              "value": "tipo da mensagem, audio ou imagem",
+              "type": "string"
+            },
+            {
+              "id": "b54b53aa-80e8-43af-a046-dd2a5b5380fc",
+              "name": "base64",
+              "value": "imagem ou audio cai aqui",
+              "type": "string"
+            },
+            {
+              "id": "f032b958-9169-456e-b9ff-f977ea352c98",
+              "name": "messageId",
+              "value": "id da mensagem usado para reagir ou responder a mensagem",
+              "type": "string"
+            },
+            {
+              "id": "77b02fbb-c92b-4e04-b7f8-c3ecbe2ef3e7",
+              "name": "message",
+              "value": "conversation",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -784,
+        -16
+      ],
+      "id": "be487ef4-a295-416b-838a-4bb0074a8d90",
+      "name": "Dados"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "55bdf79d-af25-457f-b73d-a437090aa35a",
+              "leftValue": "={{ $('Webhook').item.json.body.From }}",
+              "rightValue": "1045",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -608,
+        -16
+      ],
+      "id": "ea880b57-102e-4264-addf-003dceb62eab",
+      "name": "Filtra número"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  id,\n  nome,\n  telefone,\n  email,\n  ativo\nFROM dentbot.pacientes\nWHERE telefone = '{{ $json.From }}'\nAND ativo = true\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -416,
+        -16
+      ],
+      "id": "ad0e15ce-b595-4e53-8df5-be6ee372d522",
+      "name": "Encontrar usuário",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "72763035-f8ea-458d-bf34-a0fb0f15380c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -208,
+        -16
+      ],
+      "id": "7d441506-0805-426e-a5df-07562338ad80",
+      "name": "Verifica cadastro"
+    },
+    {
+      "parameters": {
+        "content": "Verificar usuário",
+        "height": 272,
+        "width": 1024,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        -128
+      ],
+      "id": "81403047-a4c5-4b47-a6d0-3f3d5ae0c6b3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "aqui vou colocar o conversasion que é a mensagem que vai ser recebida",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# IDENTIDADE\nVocê é o Agente de Cadastro do Dentbot, assistente digital da clínica Dental Design, em Pato Branco – PR. Sua missão é cadastrar novos pacientes de forma amigável, clara e eficiente.\n\n# OBJETIVO DA CONVERSA\nColete os dados abaixo em ordem conversacional, um campo por mensagem:\n1. nome — nome completo\n2. telefone — com DDD (ex: 46 99999-9999)\n3. email — endereço de e-mail válido\n4. data_nascimento — formato DD/MM/AAAA\n5. objetivo — o que o paciente busca na clínica\n\n# REGRA DO OBJETIVO\nAceite apenas objetivos relacionados a odontologia.\nExemplos válidos: limpeza, clareamento, implante, dor de dente, prótese, canal, consulta geral.\nSe o usuário informar algo fora desse contexto, explique gentilmente e peça que reformule.\n\n# REGRAS DE VALIDAÇÃO\n- Telefone: deve conter DDD + número (mínimo 10 dígitos)\n- E-mail: deve conter \"@\" e domínio válido\n- Data: deve ser uma data real no formato DD/MM/AAAA\n- Se um campo for inválido, informe o erro e peça novamente\n\n# APÓS COLETAR TODOS OS DADOS\nSalve no banco de dados (tabela pacientes) e confirme ao paciente com uma mensagem calorosa incluindo:\n- O nome do paciente\n- Um resumo do objetivo informado\n- Os dados de contato da clínica para o próximo passo\n\n# DADOS DA CLÍNICA\nClínica: Dental Design — Dr. Guilherme Marmentini\nTel/WhatsApp: (46) 9 9105-1056\nEndereço: Av. Brasil, 534 – Sala 1101 – Centro, Pato Branco – PR\nHorários: Seg–Sex 08h–19h | Sáb 08h–13h | Dom fechado\n\n# TOM DE VOZ\nSeja acolhedor, direto e profissional. Use frases curtas. Não faça múltiplas perguntas ao mesmo tempo.\n\n# OUTPUT (responda sempre neste formato JSON)\n{\n  \"mensagem\": \"Mensagem para o usuário\",\n  \"status\": \"aguardando_dados | cadastrando | OK | Erro\",\n  \"campo_atual\": \"nome | telefone | email | data_nascimento | objetivo | null\"\n}\n\nstatus \"OK\" somente após cadastro confirmado no banco de dados.\ncampo_atual indica qual dado está sendo coletado no momento."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        176,
+        128
+      ],
+      "id": "f8e3e267-3117-40aa-85d6-4cde199b91c7",
+      "name": "Agente de cadastro"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"mensagem\": \"Mensagem para o usuário\",\n  \"status\": \"aguardando_dados | cadastrando | OK | Erro\",\n  \"campo_atual\": \"nome | telefone | email | data_nascimento | objetivo | null\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        320
+      ],
+      "id": "fb6967ee-dfcc-478a-b807-2770243b0efb",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Dados').item.json.From }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        320
+      ],
+      "id": "ef3b9605-76e0-4f26-ba58-2dc5548ce817",
+      "name": "Simple Memory"
     }
   ],
   "connections": {
@@ -71,18 +265,7 @@
       "main": [
         [
           {
-            "node": "AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Enviar texto",
+            "node": "Dados",
             "type": "main",
             "index": 0
           }
@@ -93,15 +276,113 @@
       "ai_languageModel": [
         [
           {
-            "node": "AI Agent",
+            "node": "Agente de cadastro",
             "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dados": {
+      "main": [
+        [
+          {
+            "node": "Filtra número",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtra número": {
+      "main": [
+        [
+          {
+            "node": "Encontrar usuário",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Encontrar usuário": {
+      "main": [
+        [
+          {
+            "node": "Verifica cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verifica cadastro": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Agente de cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente de cadastro": {
+      "main": [
+        [
+          {
+            "node": "Enviar texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Agente de cadastro",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente de cadastro",
+            "type": "ai_memory",
             "index": 0
           }
         ]
       ]
     }
   },
-  "pinData": {},
+  "pinData": {
+    "Webhook": [
+      {
+        "headers": {
+          "host": "localhost:5678",
+          "content-type": "application/json",
+          "user-agent": "insomnia/2023.5.8",
+          "accept": "*/*",
+          "content-length": "46"
+        },
+        "params": {},
+        "query": {},
+        "body": {
+          "name": "teste",
+          "From": "46991251045"
+        },
+        "webhookUrl": "http://localhost:5678/webhook-test/3d6c414c-1339-4ccf-8412-c1e4e37fa398",
+        "executionMode": "test"
+      }
+    ]
+  },
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "5ccd9cd409ebda6d635c10e94a03dd05dca18c3189a2e8d52bf184eea42efe08"
