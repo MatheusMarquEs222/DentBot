@@ -9,46 +9,12 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -976,
-        -16
+        -1776,
+        2096
       ],
-      "id": "378b06cc-9233-438e-930a-4da1caf39018",
+      "id": "b2abaaab-c4bc-4359-ab17-b7eba521678a",
       "name": "Webhook",
       "webhookId": "3d6c414c-1339-4ccf-8412-c1e4e37fa398"
-    },
-    {
-      "parameters": {
-        "modelName": "models/gemini-2.5-flash",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1.1,
-      "position": [
-        176,
-        320
-      ],
-      "id": "dc255fcc-0ca6-47b4-9336-7691bbfaf4de",
-      "name": "Google Gemini Chat Model",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "A53j21eiPYynuKm2",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "resource": "messages-api",
-        "options_message": {}
-      },
-      "type": "n8n-nodes-evolution-api.evolutionApi",
-      "typeVersion": 1,
-      "position": [
-        512,
-        128
-      ],
-      "id": "dd2d8212-3213-489a-b5a8-046b807f6965",
-      "name": "Enviar texto"
     },
     {
       "parameters": {
@@ -57,43 +23,43 @@
             {
               "id": "4f9a24e5-c568-4c55-a35e-4adce19faab9",
               "name": "From",
-              "value": "={{ $json.body.From }}",
+              "value": "={{ $json.body.Dados.From }}",
               "type": "string"
             },
             {
               "id": "b5cdfbfb-ee7e-4662-a90d-021cc66c1183",
               "name": "name",
-              "value": "={{ $json.body.name }}",
+              "value": "={{ $json.body.Dados.name }}",
               "type": "string"
             },
             {
               "id": "8ff3fa8a-894c-4321-953e-6d9f68c6a37f",
               "name": "instance",
-              "value": "",
+              "value": "={{ $json.body.Dados.instance }}",
               "type": "string"
             },
             {
               "id": "57f1a778-db47-42ae-8f54-9b15d3def938",
               "name": "messageType",
-              "value": "tipo da mensagem, audio ou imagem",
+              "value": "={{ $json.body.Dados.messageType }}",
               "type": "string"
             },
             {
               "id": "b54b53aa-80e8-43af-a046-dd2a5b5380fc",
               "name": "base64",
-              "value": "imagem ou audio cai aqui",
+              "value": "={{ $json.body.Dados.base64 }}",
               "type": "string"
             },
             {
               "id": "f032b958-9169-456e-b9ff-f977ea352c98",
               "name": "messageId",
-              "value": "id da mensagem usado para reagir ou responder a mensagem",
+              "value": "={{ $json.body.Dados.messageId }}",
               "type": "string"
             },
             {
               "id": "77b02fbb-c92b-4e04-b7f8-c3ecbe2ef3e7",
               "name": "message",
-              "value": "conversation",
+              "value": "={{ $json.body.Dados.message }}",
               "type": "string"
             }
           ]
@@ -103,10 +69,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -784,
-        -16
+        -1584,
+        2096
       ],
-      "id": "be487ef4-a295-416b-838a-4bb0074a8d90",
+      "id": "16f588fa-a59b-4faf-ae0f-c475ec28a441",
       "name": "Dados"
     },
     {
@@ -115,47 +81,81 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict",
+            "typeValidation": "loose",
             "version": 3
           },
           "conditions": [
             {
               "id": "55bdf79d-af25-457f-b73d-a437090aa35a",
-              "leftValue": "={{ $('Webhook').item.json.body.From }}",
-              "rightValue": "1045",
+              "leftValue": "={{ $json.messageType }}",
+              "rightValue": "text",
               "operator": {
                 "type": "string",
                 "operation": "equals"
+              }
+            },
+            {
+              "id": "accde531-b4b4-45c4-b7fc-060271adfae8",
+              "leftValue": "={{ $json.message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isNotEmpty",
+                "singleValue": true
               }
             }
           ],
           "combinator": "and"
         },
+        "looseTypeValidation": true,
         "options": {}
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -608,
-        -16
+        -1408,
+        2096
       ],
-      "id": "ea880b57-102e-4264-addf-003dceb62eab",
-      "name": "Filtra número"
+      "id": "d03739d8-4415-42e1-8015-32e82f91d28e",
+      "name": "Tem mensagem de texto?"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "Olá! No momento só consigo processar mensagens de texto. Por favor, escreva sua mensagem e terei o prazer em ajudar! 😊",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        -1408,
+        2288
+      ],
+      "id": "a8fa32e9-7ac3-4304-b2b7-f2daf8a9a89c",
+      "name": "Avisar tipo não suportado",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT\n  id,\n  nome,\n  telefone,\n  email,\n  ativo\nFROM dentbot.pacientes\nWHERE telefone = '{{ $json.From }}'\nAND ativo = true\nLIMIT 1;",
+        "query": "SELECT\n  p.id,\n  p.nome,\n  p.telefone,\n  p.email,\n  p.ativo,\n  s.estado,\n  s.dados_contexto,\n  s.slot_data,\n  s.slot_horario_inicio,\n  s.slot_horario_fim,\n  s.slot_procedimento\nFROM dentbot.pacientes p\nLEFT JOIN dentbot.sessoes s ON s.telefone = p.telefone\nWHERE p.telefone = REGEXP_REPLACE($1, '[^0-9]', '', 'g')\n  AND p.ativo = true\nORDER BY s.atualizado_em DESC\nLIMIT 1;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -416,
-        -16
+        -1184,
+        2096
       ],
-      "id": "ad0e15ce-b595-4e53-8df5-be6ee372d522",
-      "name": "Encontrar usuário",
+      "id": "74942b97-8173-4276-b496-6522bf399046",
+      "name": "Buscar usuário e sessão",
       "alwaysOutputData": true,
       "credentials": {
         "postgres": {
@@ -192,72 +192,944 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -208,
-        -16
+        -1008,
+        2096
       ],
-      "id": "7d441506-0805-426e-a5df-07562338ad80",
-      "name": "Verifica cadastro"
+      "id": "64371b90-f656-4f73-aa3f-7814c7691582",
+      "name": "Paciente cadastrado?"
     },
     {
       "parameters": {
-        "content": "Verificar usuário",
-        "height": 272,
-        "width": 1024,
-        "color": 4
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "state-check",
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": "aguardando_confirmacao",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "type": "n8n-nodes-base.stickyNote",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -832,
+        1920
+      ],
+      "id": "841afe93-4e03-43a6-9849-b788344e042a",
+      "name": "Estado: aguardando confirmação?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "confirm-sim",
+              "leftValue": "={{ $('Dados').item.json.message.toLowerCase() }}",
+              "rightValue": "sim",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "confirm-confirmo",
+              "leftValue": "={{ $('Dados').item.json.message.toLowerCase() }}",
+              "rightValue": "confirmo",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "confirm-ok",
+              "leftValue": "={{ $('Dados').item.json.message.toLowerCase() }}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "confirm-pode",
+              "leftValue": "={{ $('Dados').item.json.message.toLowerCase() }}",
+              "rightValue": "pode",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -592,
+        1808
+      ],
+      "id": "6b9e512c-8616-451a-9fa0-16e3baaae012",
+      "name": "Paciente confirmou?"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "primary"
+        },
+        "start": "={{ $('Buscar usuário e sessão').item.json.slot_data + 'T' + $('Buscar usuário e sessão').item.json.slot_horario_inicio + ':00' }}",
+        "end": "={{ $('Buscar usuário e sessão').item.json.slot_data + 'T' + $('Buscar usuário e sessão').item.json.slot_horario_fim + ':00' }}",
+        "additionalFields": {
+          "attendees": [
+            {
+              "email": "={{ $('Buscar usuário e sessão').item.json.email }}"
+            }
+          ],
+          "description": "=Paciente: {{ $('Buscar usuário e sessão').item.json.nome }}\nTelefone: {{ $('Buscar usuário e sessão').item.json.telefone }}\nEmail: {{ $('Buscar usuário e sessão').item.json.email }}\nProcedimento: {{ $('Buscar usuário e sessão').item.json.slot_procedimento }}\nAgendado via Dentbot",
+          "location": "Av. Brasil, 534 – Sala 1101 – Centro, Pato Branco – PR",
+          "summary": "=Consulta: {{ $('Buscar usuário e sessão').item.json.nome }} — {{ $('Buscar usuário e sessão').item.json.slot_procedimento }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -336,
+        1696
+      ],
+      "id": "0804a3f0-6ed8-4ee1-8937-ce830059ccb9",
+      "name": "Criar evento Google Calendar"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dentbot.agendamentos (paciente_id, data_consulta, horario_inicio, horario_fim, procedimento, google_event_id, status, criado_em)\nVALUES (\n  $1, $2::date, $3::time, $4::time, $5, $6, 'confirmado', NOW()\n)\nRETURNING id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -96,
+        1696
+      ],
+      "id": "3e7db990-34b9-4c57-856e-59e7fa78223a",
+      "name": "Salvar agendamento DB",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE dentbot.sessoes SET estado = 'ocioso', slot_data = NULL, slot_horario_inicio = NULL, slot_horario_fim = NULL, slot_procedimento = NULL, atualizado_em = NOW() WHERE telefone = REGEXP_REPLACE($1, '[^0-9]', '', 'g');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        144,
+        1696
+      ],
+      "id": "a5fbbc80-752b-4232-a448-aac2036934fb",
+      "name": "Limpar sessão (confirmado)",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "=✅ Consulta confirmada!\n\n📅 Data: {{ $('Buscar usuário e sessão').item.json.slot_data.split('-').reverse().join('/') }}\n⏰ Horário: {{ $('Buscar usuário e sessão').item.json.slot_horario_inicio }}\n🦷 Procedimento: {{ $('Buscar usuário e sessão').item.json.slot_procedimento }}\n📍 Av. Brasil, 534 – Sala 1101 – Pato Branco\n\nO convite foi adicionado à agenda. Até lá, {{ $('Buscar usuário e sessão').item.json.nome.split(' ')[0] }}! 😊",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
       "typeVersion": 1,
       "position": [
-        -1040,
-        -128
+        384,
+        1696
       ],
-      "id": "81403047-a4c5-4b47-a6d0-3f3d5ae0c6b3",
-      "name": "Sticky Note"
+      "id": "3852a478-7bd9-42f8-a49a-da0fe25d5344",
+      "name": "Confirmar ao paciente",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE dentbot.sessoes SET estado = 'ocioso', slot_data = NULL, slot_horario_inicio = NULL, slot_horario_fim = NULL, slot_procedimento = NULL, atualizado_em = NOW() WHERE telefone = REGEXP_REPLACE($1, '[^0-9]', '', 'g');",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -336,
+        1920
+      ],
+      "id": "3297bb7a-b719-41a3-b1d5-588be365e92a",
+      "name": "Limpar sessão (cancelado)",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "=Tudo bem! O agendamento foi cancelado. Se quiser marcar em outro momento, é só me chamar. 😊\n\nSe precisar de algo mais, estou por aqui, {{ $('Buscar usuário e sessão').item.json.nome.split(' ')[0] }}!",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        1920
+      ],
+      "id": "c9fd1899-f55a-4626-b95f-7170ab1b22d1",
+      "name": "Avisar cancelamento",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "aqui vou colocar o conversasion que é a mensagem que vai ser recebida",
+        "text": "={{ $('Dados').item.json.message }}",
         "hasOutputParser": true,
         "options": {
-          "systemMessage": "=# IDENTIDADE\nVocê é o Agente de Cadastro do Dentbot, assistente digital da clínica Dental Design, em Pato Branco – PR. Sua missão é cadastrar novos pacientes de forma amigável, clara e eficiente.\n\n# OBJETIVO DA CONVERSA\nColete os dados abaixo em ordem conversacional, um campo por mensagem:\n1. nome — nome completo\n2. telefone — com DDD (ex: 46 99999-9999)\n3. email — endereço de e-mail válido\n4. data_nascimento — formato DD/MM/AAAA\n5. objetivo — o que o paciente busca na clínica\n\n# REGRA DO OBJETIVO\nAceite apenas objetivos relacionados a odontologia.\nExemplos válidos: limpeza, clareamento, implante, dor de dente, prótese, canal, consulta geral.\nSe o usuário informar algo fora desse contexto, explique gentilmente e peça que reformule.\n\n# REGRAS DE VALIDAÇÃO\n- Telefone: deve conter DDD + número (mínimo 10 dígitos)\n- E-mail: deve conter \"@\" e domínio válido\n- Data: deve ser uma data real no formato DD/MM/AAAA\n- Se um campo for inválido, informe o erro e peça novamente\n\n# APÓS COLETAR TODOS OS DADOS\nSalve no banco de dados (tabela pacientes) e confirme ao paciente com uma mensagem calorosa incluindo:\n- O nome do paciente\n- Um resumo do objetivo informado\n- Os dados de contato da clínica para o próximo passo\n\n# DADOS DA CLÍNICA\nClínica: Dental Design — Dr. Guilherme Marmentini\nTel/WhatsApp: (46) 9 9105-1056\nEndereço: Av. Brasil, 534 – Sala 1101 – Centro, Pato Branco – PR\nHorários: Seg–Sex 08h–19h | Sáb 08h–13h | Dom fechado\n\n# TOM DE VOZ\nSeja acolhedor, direto e profissional. Use frases curtas. Não faça múltiplas perguntas ao mesmo tempo.\n\n# OUTPUT (responda sempre neste formato JSON)\n{\n  \"mensagem\": \"Mensagem para o usuário\",\n  \"status\": \"aguardando_dados | cadastrando | OK | Erro\",\n  \"campo_atual\": \"nome | telefone | email | data_nascimento | objetivo | null\"\n}\n\nstatus \"OK\" somente após cadastro confirmado no banco de dados.\ncampo_atual indica qual dado está sendo coletado no momento."
+          "systemMessage": "=# IDENTIDADE\nVocê é o Dentbot, assistente virtual da clínica Dental Design, em Pato Branco – PR.\nVocê está atendendo {{ $('Buscar usuário e sessão').item.json.nome }}.\n\n# MISSÃO\nAjudar o paciente a marcar, verificar ou cancelar consultas. Quando o paciente quiser agendar, colete:\n1. data desejada (DD/MM/AAAA)\n2. horário preferido (manhã, tarde, ou horário específico)\n3. tipo de procedimento desejado\n\nQuando o paciente quiser CANCELAR uma consulta, pergunte qual consulta deseja cancelar e retorne status 'solicitar_cancelamento'.\nQuando o paciente quiser REAGENDAR, colete a data/horário novo e retorne status 'solicitar_agendamento' com o contexto de reagendamento.\n\n# APÓS COLETAR DATA E HORÁRIO\nRetorne status \"solicitar_agendamento\" com os dados para o sistema verificar disponibilidade.\n\n# DADOS DA CLÍNICA\nClínica: Dental Design — Dr. Guilherme Marmentini\nTel/WhatsApp: (46) 9 9105-1056\nEndereço: Av. Brasil, 534 – Sala 1101 – Centro, Pato Branco – PR\nHorários: Seg–Sex 08h–19h | Sáb 08h–13h | Dom fechado\n\n# TOM DE VOZ\nSeja acolhedor, direto e profissional. Use frases curtas.\n\n# OUTPUT (sempre neste formato JSON)\n{\n  \"mensagem\": \"Mensagem para o usuário\",\n  \"status\": \"conversando | solicitar_agendamento | solicitar_cancelamento | Erro\",\n  \"agendamento\": {\n    \"data\": null,\n    \"horario\": null,\n    \"procedimento\": null\n  }\n}"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        176,
-        128
+        -624,
+        2096
       ],
-      "id": "f8e3e267-3117-40aa-85d6-4cde199b91c7",
+      "id": "4c6ca4f7-5ec6-462e-a525-f9adb8aa558c",
+      "name": "Agente de atendimento"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "agendar-check",
+              "leftValue": "={{ $json.output.status }}",
+              "rightValue": "solicitar_agendamento",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -368,
+        2096
+      ],
+      "id": "60d06d7f-4390-4eb7-8820-cf385c6e1f99",
+      "name": "Quer agendar?"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "primary"
+        },
+        "limit": 20,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        2016
+      ],
+      "id": "fd3d751f-ccbb-4978-92f5-5cc49b6fe163",
+      "name": "Verificar disponibilidade"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=O paciente {{ $('Buscar usuário e sessão').item.json.nome }} quer agendar para {{ $('Agente de atendimento').item.json.output.agendamento.data }} às {{ $('Agente de atendimento').item.json.output.agendamento.horario }}. Procedimento: {{ $('Agente de atendimento').item.json.output.agendamento.procedimento }}.\n\nEventos já existentes nesse dia no Google Agenda:\n{{ JSON.stringify($json) }}\n\nHorário de funcionamento: Seg–Sex 08h–19h | Sáb 08h–13h | Dom fechado. Cada consulta dura 1 hora.\n\nVerifique conflitos considerando o horário solicitado. Se disponível, confirme. Se não, sugira até 2 alternativas no mesmo dia dentro do horário de funcionamento. Peça confirmação final ao paciente.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Você é o assistente de agendamento da Dental Design. Confirme disponibilidade ou sugira alternativas. Retorne sempre JSON:\n{\n  \"mensagem\": \"Mensagem para o paciente\",\n  \"status\": \"aguardando_confirmacao\",\n  \"slot_sugerido\": {\n    \"data\": \"YYYY-MM-DD\",\n    \"horario_inicio\": \"HH:MM\",\n    \"horario_fim\": \"HH:MM\",\n    \"procedimento\": \"nome do procedimento\"\n  }\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        160,
+        2016
+      ],
+      "id": "737246b3-8344-4006-bed0-6e3543617bcd",
+      "name": "Analisar disponibilidade"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dentbot.sessoes (telefone, estado, slot_data, slot_horario_inicio, slot_horario_fim, slot_procedimento, atualizado_em)\nVALUES (REGEXP_REPLACE($1, '[^0-9]', '', 'g'), 'aguardando_confirmacao', $2::date, $3::time, $4::time, $5, NOW())\nON CONFLICT (telefone) DO UPDATE SET\n  estado = 'aguardando_confirmacao',\n  slot_data = EXCLUDED.slot_data,\n  slot_horario_inicio = EXCLUDED.slot_horario_inicio,\n  slot_horario_fim = EXCLUDED.slot_horario_fim,\n  slot_procedimento = EXCLUDED.slot_procedimento,\n  atualizado_em = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        432,
+        2016
+      ],
+      "id": "b2369f0f-5dde-43c2-9f86-1a25a76a34b9",
+      "name": "Salvar estado aguardando confirmação",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "={{ $('Analisar disponibilidade').item.json.output.mensagem }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        688,
+        2016
+      ],
+      "id": "7bfa2d54-159e-4f55-8a3a-8dda00060bab",
+      "name": "Enviar opções ao paciente",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "={{ $('Agente de atendimento').item.json.output.mensagem }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        2192
+      ],
+      "id": "b700d4ff-c9d4-4e0a-ad07-0147c6cdf4f3",
+      "name": "Enviar resposta atendimento",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Dados').item.json.message }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# IDENTIDADE\nVocê é o Agente de Cadastro do Dentbot, assistente digital da clínica Dental Design, em Pato Branco – PR. Sua missão é cadastrar novos pacientes de forma amigável, clara e eficiente.\n\n# OBJETIVO DA CONVERSA\nColete os dados abaixo em ordem conversacional, um campo por mensagem:\n1. nome — nome completo\n2. telefone — com DDD (ex: 46 99999-9999)\n3. email — endereço de e-mail válido\n4. data_nascimento — formato DD/MM/AAAA\n5. objetivo — o que o paciente busca na clínica\n\n# REGRA DO OBJETIVO\nAceite apenas objetivos relacionados a odontologia.\nExemplos válidos: limpeza, clareamento, implante, dor de dente, prótese, canal, consulta geral.\nSe o usuário informar algo fora desse contexto, explique gentilmente e peça que reformule.\n\n# REGRAS DE VALIDAÇÃO\n- Telefone: deve conter DDD + número (mínimo 10 dígitos)\n- E-mail: deve conter \"@\" e domínio válido\n- Data: deve ser uma data real no formato DD/MM/AAAA\n- Se um campo for inválido, informe o erro e peça novamente\n\n# APÓS COLETAR TODOS OS DADOS\nRetorne status \"cadastro_completo\" com todos os dados para que o sistema salve no banco. Confirme ao paciente com mensagem calorosa incluindo o nome e resumo do objetivo.\n\n# DADOS DA CLÍNICA\nClínica: Dental Design — Dr. Guilherme Marmentini\nTel/WhatsApp: (46) 9 9105-1056\nEndereço: Av. Brasil, 534 – Sala 1101 – Centro, Pato Branco – PR\nHorários: Seg–Sex 08h–19h | Sáb 08h–13h | Dom fechado\n\n# TOM DE VOZ\nSeja acolhedor, direto e profissional. Use frases curtas. Não faça múltiplas perguntas ao mesmo tempo.\n\n# OUTPUT (responda sempre neste formato JSON)\n{\n  \"mensagem\": \"Mensagem para o usuário\",\n  \"status\": \"aguardando_dados | cadastro_completo | Erro\",\n  \"campo_atual\": \"nome | telefone | email | data_nascimento | objetivo | null\",\n  \"dados_coletados\": {\n    \"nome\": null,\n    \"telefone\": null,\n    \"email\": null,\n    \"data_nascimento\": null,\n    \"objetivo\": null\n  }\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -864,
+        2320
+      ],
+      "id": "a85a6c80-b13c-42c3-9044-44e0361a1c8d",
       "name": "Agente de cadastro"
     },
     {
       "parameters": {
-        "jsonSchemaExample": "{\n  \"mensagem\": \"Mensagem para o usuário\",\n  \"status\": \"aguardando_dados | cadastrando | OK | Erro\",\n  \"campo_atual\": \"nome | telefone | email | data_nascimento | objetivo | null\"\n}"
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cad-done-check",
+              "leftValue": "={{ $json.output.status }}",
+              "rightValue": "cadastro_completo",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.3,
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
       "position": [
-        448,
-        320
+        -608,
+        2320
       ],
-      "id": "fb6967ee-dfcc-478a-b807-2770243b0efb",
-      "name": "Structured Output Parser"
+      "id": "de96de8e-ef9f-4378-b8ac-c7c3a4e69714",
+      "name": "Cadastro completo?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dentbot.pacientes (nome, telefone, email, data_nascimento, objetivo, ativo, criado_em)\nVALUES ($1, REGEXP_REPLACE($2, '[^0-9]', '', 'g'), $3, $4::date, $5, true, NOW())\nRETURNING id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -368,
+        2400
+      ],
+      "id": "a593abd4-ab6e-4dd8-9dd1-65a6f8e80895",
+      "name": "INSERT paciente",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO dentbot.sessoes (telefone, estado, atualizado_em)\nVALUES (REGEXP_REPLACE($1, '[^0-9]', '', 'g'), 'ocioso', NOW())\nON CONFLICT (telefone) DO UPDATE SET estado = 'ocioso', atualizado_em = NOW();",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -96,
+        2400
+      ],
+      "id": "30484c26-9a2f-451c-8cab-af515800e7aa",
+      "name": "Criar sessão novo paciente",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "=🎉 Bem-vindo(a) à Dental Design, {{ $('Agente de cadastro').item.json.output.dados_coletados.nome.split(' ')[0] }}!\n\nSeu cadastro foi realizado com sucesso. Agora você já pode agendar sua consulta!\n\nO que deseja fazer?\n• Marcar uma consulta\n• Tirar uma dúvida\n\nEstou aqui para ajudar 😊",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        144,
+        2400
+      ],
+      "id": "eff4aef7-2d69-4da1-a69a-08f4e2ae51a6",
+      "name": "Enviar boas-vindas",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "={{ $('Agente de cadastro').item.json.output.mensagem }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        2560
+      ],
+      "id": "0df82d87-c48b-4065-b5e7-e74075632002",
+      "name": "Enviar msg cadastro",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -1024,
+        2464
+      ],
+      "id": "c3c8fc65-6e36-4db7-81a4-c9b3b32d2930",
+      "name": "Gemini (cadastro)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "A53j21eiPYynuKm2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -624,
+        1904
+      ],
+      "id": "630fc86d-4e1d-4e88-9a4e-384a945a11b4",
+      "name": "Gemini (atendimento)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "A53j21eiPYynuKm2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        160,
+        1824
+      ],
+      "id": "a2f9a608-57b7-4abc-88f3-19d0ca63b720",
+      "name": "Gemini (disponibilidade)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "A53j21eiPYynuKm2",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Dados').item.json.From }}"
+        "sessionKey": "={{ $('Dados').item.json.From }}_cadastro"
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        304,
-        320
+        -912,
+        2464
       ],
-      "id": "ef3b9605-76e0-4f26-ba58-2dc5548ce817",
-      "name": "Simple Memory"
+      "id": "fb0ef610-6dcf-48db-9b6d-0b93063a208b",
+      "name": "Memória cadastro"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Dados').item.json.From }}_atendimento"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -624,
+        1744
+      ],
+      "id": "a8c40b32-a478-4858-9b55-bb7a322ddd29",
+      "name": "Memória atendimento"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Dados').item.json.From }}_disponibilidade"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        1904
+      ],
+      "id": "93a908fb-0e4c-4941-9c43-76e9135012c6",
+      "name": "Memória disponibilidade"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"mensagem\": \"Olá! Qual é o seu nome completo?\",\n  \"status\": \"aguardando_dados\",\n  \"campo_atual\": \"nome\",\n  \"dados_coletados\": {\n    \"nome\": null,\n    \"telefone\": null,\n    \"email\": null,\n    \"data_nascimento\": null,\n    \"objetivo\": null\n  }\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -800,
+        2464
+      ],
+      "id": "fd397ce9-5ad0-44ac-9238-c95c9954ffd1",
+      "name": "Parser cadastro"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"mensagem\": \"Claro! Para qual data você gostaria de agendar?\",\n  \"status\": \"conversando\",\n  \"agendamento\": {\n    \"data\": null,\n    \"horario\": null,\n    \"procedimento\": null\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -496,
+        1904
+      ],
+      "id": "b3c333a3-690b-4c0e-a9c5-7b6e35252ab0",
+      "name": "Parser atendimento"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"mensagem\": \"Horário disponível! Confirma sua consulta?\",\n  \"status\": \"aguardando_confirmacao\",\n  \"slot_sugerido\": {\n    \"data\": \"2025-06-25\",\n    \"horario_inicio\": \"09:00\",\n    \"horario_fim\": \"10:00\",\n    \"procedimento\": \"Limpeza\"\n  }\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        384,
+        1904
+      ],
+      "id": "68f1a6ab-cab8-4d86-921c-f73aac78b10c",
+      "name": "Parser disponibilidade"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  a.id,\n  a.google_event_id,\n  a.data_consulta,\n  a.horario_inicio,\n  a.horario_fim,\n  a.procedimento,\n  p.nome,\n  p.email\nFROM dentbot.agendamentos a\nJOIN dentbot.pacientes p ON p.id = a.paciente_id\nWHERE p.telefone = REGEXP_REPLACE($1, '[^0-9]', '', 'g')\n  AND a.status = 'confirmado'\n  AND a.data_consulta >= CURRENT_DATE\nORDER BY a.data_consulta ASC, a.horario_inicio ASC\nLIMIT 5;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -336,
+        2288
+      ],
+      "id": "7e43dc8f-50b0-4220-9f40-537575210820",
+      "name": "Buscar agendamentos para cancelar",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "tem-agendamento",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -96,
+        2288
+      ],
+      "id": "22480237-87e8-4eea-9cfd-7e5b99c2b30e",
+      "name": "Tem agendamento ativo?"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "primary",
+          "mode": "list",
+          "cachedResultName": "primary"
+        },
+        "eventId": "={{ $json.google_event_id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        144,
+        2288
+      ],
+      "id": "8f64e614-c6e5-4286-9959-aff8b36ce888",
+      "name": "Deletar evento Google Calendar"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE dentbot.agendamentos SET status = 'cancelado', atualizado_em = NOW() WHERE id = $1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        384,
+        2288
+      ],
+      "id": "43aec0da-bb2d-4069-a437-ea84207aa67a",
+      "name": "Atualizar status cancelado",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "=✅ Consulta cancelada com sucesso!\n\n📅 {{ $('Buscar agendamentos para cancelar').item.json.data_consulta.split('-').reverse().join('/') }} às {{ $('Buscar agendamentos para cancelar').item.json.horario_inicio }}\n🦷 {{ $('Buscar agendamentos para cancelar').item.json.procedimento }}\n\nSe quiser remarcar em outro momento, é só me chamar! 😊",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        624,
+        2288
+      ],
+      "id": "508034d8-ca25-414b-bafd-284e1ba3a884",
+      "name": "Confirmar cancelamento ao paciente",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "={{ $('Dados').item.json.instance }}",
+        "remoteJid": "={{ $('Dados').item.json.From }}",
+        "messageText": "=Não encontrei nenhuma consulta agendada para cancelar. Se precisar de ajuda, é só me chamar! 😊",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        144,
+        2400
+      ],
+      "id": "79f3166e-9e84-47b5-a5b0-1a437abb2bf0",
+      "name": "Avisar sem agendamento",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1776,
+        2848
+      ],
+      "id": "18bc29e4-6df8-4b1e-a563-d5faadb37cf7",
+      "name": "Trigger lembrete diário (08h)"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  a.id,\n  a.data_consulta,\n  a.horario_inicio,\n  a.procedimento,\n  p.nome,\n  p.telefone\nFROM dentbot.agendamentos a\nJOIN dentbot.pacientes p ON p.id = a.paciente_id\nWHERE a.data_consulta = CURRENT_DATE + INTERVAL '1 day'\n  AND a.status = 'confirmado'\nORDER BY a.horario_inicio;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1536,
+        2848
+      ],
+      "id": "53413195-29cc-4d2a-92a8-a70084491690",
+      "name": "Buscar consultas de amanhã",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "tem-consultas",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1296,
+        2848
+      ],
+      "id": "ba7fbeed-7341-4183-a771-33dae5b651b8",
+      "name": "Tem consultas amanhã?"
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "minha-instancia",
+        "remoteJid": "={{ $json.telefone + '@s.whatsapp.net' }}",
+        "messageText": "=Olá, {{ $json.nome.split(' ')[0] }}! 👋\n\nPassando para lembrar que você tem consulta *amanhã* na Dental Design:\n\n📅 {{ new Date($json.data_consulta).toLocaleDateString('pt-BR', {weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric'}) }}\n⏰ {{ $json.horario_inicio.substring(0,5) }}\n🦷 {{ $json.procedimento }}\n📍 Av. Brasil, 534 – Sala 1101 – Centro, Pato Branco – PR\n\nPrecisa cancelar ou reagendar? É só responder aqui! 😊",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        -1056,
+        2848
+      ],
+      "id": "6e16ed15-f2a9-421e-85a0-dfc45e5ffef5",
+      "name": "Enviar lembrete WhatsApp",
+      "credentials": {
+        "evolutionApi": {
+          "id": "BzQb4pe2PcLVbwo2",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE dentbot.agendamentos SET lembrete_enviado = true WHERE id = $1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -816,
+        2848
+      ],
+      "id": "92760307-7f83-49d8-8901-29eccc09490e",
+      "name": "Marcar lembrete enviado",
+      "credentials": {
+        "postgres": {
+          "id": "JtZkglTM0jNwtQUQ",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "connections": {
@@ -272,56 +1144,200 @@
         ]
       ]
     },
-    "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente de cadastro",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Dados": {
       "main": [
         [
           {
-            "node": "Filtra número",
+            "node": "Tem mensagem de texto?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Filtra número": {
+    "Tem mensagem de texto?": {
       "main": [
         [
           {
-            "node": "Encontrar usuário",
+            "node": "Buscar usuário e sessão",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar tipo não suportado",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Encontrar usuário": {
+    "Buscar usuário e sessão": {
       "main": [
         [
           {
-            "node": "Verifica cadastro",
+            "node": "Paciente cadastrado?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Verifica cadastro": {
+    "Paciente cadastrado?": {
       "main": [
-        [],
+        [
+          {
+            "node": "Estado: aguardando confirmação?",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Agente de cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Estado: aguardando confirmação?": {
+      "main": [
+        [
+          {
+            "node": "Paciente confirmou?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente de atendimento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Paciente confirmou?": {
+      "main": [
+        [
+          {
+            "node": "Criar evento Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Limpar sessão (cancelado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar evento Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Salvar agendamento DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar agendamento DB": {
+      "main": [
+        [
+          {
+            "node": "Limpar sessão (confirmado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpar sessão (confirmado)": {
+      "main": [
+        [
+          {
+            "node": "Confirmar ao paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpar sessão (cancelado)": {
+      "main": [
+        [
+          {
+            "node": "Avisar cancelamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente de atendimento": {
+      "main": [
+        [
+          {
+            "node": "Quer agendar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quer agendar?": {
+      "main": [
+        [
+          {
+            "node": "Verificar disponibilidade",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar agendamentos para cancelar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar disponibilidade": {
+      "main": [
+        [
+          {
+            "node": "Analisar disponibilidade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analisar disponibilidade": {
+      "main": [
+        [
+          {
+            "node": "Salvar estado aguardando confirmação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar estado aguardando confirmação": {
+      "main": [
+        [
+          {
+            "node": "Enviar opções ao paciente",
             "type": "main",
             "index": 0
           }
@@ -332,14 +1348,120 @@
       "main": [
         [
           {
-            "node": "Enviar texto",
+            "node": "Cadastro completo?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Structured Output Parser": {
+    "Cadastro completo?": {
+      "main": [
+        [
+          {
+            "node": "INSERT paciente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar msg cadastro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "INSERT paciente": {
+      "main": [
+        [
+          {
+            "node": "Criar sessão novo paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar sessão novo paciente": {
+      "main": [
+        [
+          {
+            "node": "Enviar boas-vindas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (cadastro)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de cadastro",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (atendimento)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente de atendimento",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (disponibilidade)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analisar disponibilidade",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória cadastro": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente de cadastro",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória atendimento": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente de atendimento",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memória disponibilidade": {
+      "ai_memory": [
+        [
+          {
+            "node": "Analisar disponibilidade",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser cadastro": {
       "ai_outputParser": [
         [
           {
@@ -350,39 +1472,125 @@
         ]
       ]
     },
-    "Simple Memory": {
-      "ai_memory": [
+    "Parser atendimento": {
+      "ai_outputParser": [
         [
           {
-            "node": "Agente de cadastro",
-            "type": "ai_memory",
+            "node": "Agente de atendimento",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parser disponibilidade": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analisar disponibilidade",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar agendamentos para cancelar": {
+      "main": [
+        [
+          {
+            "node": "Tem agendamento ativo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem agendamento ativo?": {
+      "main": [
+        [
+          {
+            "node": "Deletar evento Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar sem agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deletar evento Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Atualizar status cancelado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar status cancelado": {
+      "main": [
+        [
+          {
+            "node": "Confirmar cancelamento ao paciente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger lembrete diário (08h)": {
+      "main": [
+        [
+          {
+            "node": "Buscar consultas de amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar consultas de amanhã": {
+      "main": [
+        [
+          {
+            "node": "Tem consultas amanhã?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem consultas amanhã?": {
+      "main": [
+        [
+          {
+            "node": "Enviar lembrete WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar lembrete WhatsApp": {
+      "main": [
+        [
+          {
+            "node": "Marcar lembrete enviado",
+            "type": "main",
             "index": 0
           }
         ]
       ]
     }
   },
-  "pinData": {
-    "Webhook": [
-      {
-        "headers": {
-          "host": "localhost:5678",
-          "content-type": "application/json",
-          "user-agent": "insomnia/2023.5.8",
-          "accept": "*/*",
-          "content-length": "46"
-        },
-        "params": {},
-        "query": {},
-        "body": {
-          "name": "teste",
-          "From": "46991251045"
-        },
-        "webhookUrl": "http://localhost:5678/webhook-test/3d6c414c-1339-4ccf-8412-c1e4e37fa398",
-        "executionMode": "test"
-      }
-    ]
-  },
+  "pinData": {},
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "5ccd9cd409ebda6d635c10e94a03dd05dca18c3189a2e8d52bf184eea42efe08"
