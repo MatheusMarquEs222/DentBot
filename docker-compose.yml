@@ -1,145 +1,156 @@
-version: "3.8"
+# =====================================================================
+# Chatbot de Atendimento Odontológico — Infraestrutura
+# Postgres + Redis + Evolution API (WhatsApp) + n8n (automação)
+# =====================================================================
 
-# ─── VOLUMES ──────────────────────────────────────────────────────────────────
-# Dados persistem mesmo após "docker compose down".
-# Use "docker compose down -v" apenas se quiser apagar tudo.
-volumes:
-  postgres_data:
-  n8n_data:
-  evolution_data:
-  redis_data:
-
-# ─── REDE ─────────────────────────────────────────────────────────────────────
-# Todos os serviços se comunicam por nome (ex: "postgres", "n8n", "redis").
-networks:
-  dentbot-network:
-    driver: bridge
-
-# ─── SERVIÇOS ─────────────────────────────────────────────────────────────────
 services:
 
-  # ── 1. PostgreSQL ─────────────────────────────────────────────────────────────
+  # -------------------------------------------------------------------
+  # Banco de dados compartilhado (um container, dois bancos:
+  # "evolution" para a Evolution API e "n8n" para o n8n)
+  # -------------------------------------------------------------------
   postgres:
+    container_name: postgres
     image: postgres:16-alpine
-    container_name: dentbot_postgres
-    restart: unless-stopped
+    restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=postgres
+    command: ["postgres", "-c", "max_connections=200"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "127.0.0.1:5432:5432"
     networks:
-      - dentbot-network
+      - chatbot-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 20s
 
-  # ── 2. Redis ──────────────────────────────────────────────────────────────────
+  # -------------------------------------------------------------------
+  # Redis — cache da Evolution API (sessões, instâncias)
+  # -------------------------------------------------------------------
   redis:
+    container_name: clinica_redis
     image: redis:7-alpine
-    container_name: dentbot_redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes
+    restart: always
+    command: redis-server --port 6379 --appendonly yes
     volumes:
       - redis_data:/data
-    ports:
-      - "${REDIS_PORT}:6379"
     networks:
-      - dentbot-network
+      - chatbot-net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ── 3. n8n ────────────────────────────────────────────────────────────────────
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: dentbot_n8n
-    restart: unless-stopped
+  # -------------------------------------------------------------------
+  # Evolution API — gerenciamento dos números de WhatsApp
+  # Manager web: http://localhost:8080/manager
+  # -------------------------------------------------------------------
+  evolution-api:
+    container_name: evolution_api
+    image: evoapicloud/evolution-api:v2.3.7
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
-      - "${N8N_PORT}:5678"
+      - "8080:8080"
+    volumes:
+      - evolution_instances:/evolution/instances
     environment:
-      # Banco de dados (PostgreSQL em vez do SQLite padrão)
-      DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: postgres
-      DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
-      DB_POSTGRESDB_USER: ${POSTGRES_USER}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
-      # Segurança
-      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
-      N8N_BASIC_AUTH_ACTIVE: "true"
-      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
-      # Webhooks — Evolution API vai enviar eventos para esta URL
-      WEBHOOK_URL: ${WEBHOOK_URL}
-      N8N_HOST: 0.0.0.0
-      N8N_PORT: 5678
-      N8N_PROTOCOL: http
-      # Fuso horário
-      GENERIC_TIMEZONE: America/Sao_Paulo
-      TZ: America/Sao_Paulo
+      # ---- Servidor ----
+      - SERVER_TYPE=http
+      - SERVER_PORT=8080
+      - SERVER_URL=${EVOLUTION_SERVER_URL}
+      - LANGUAGE=pt-BR
+      - DEL_INSTANCE=false
+
+      # ---- Autenticação (chave global da API) ----
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+
+      # ---- Banco de dados (Postgres) ----
+      - DATABASE_ENABLED=true
+      - DATABASE_PROVIDER=postgresql
+      - DATABASE_CONNECTION_URI=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/evolution?schema=public
+      - DATABASE_CONNECTION_CLIENT_NAME=evolution
+      - DATABASE_SAVE_DATA_INSTANCE=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
+      - DATABASE_SAVE_MESSAGE_UPDATE=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - DATABASE_SAVE_DATA_CHATS=true
+      - DATABASE_SAVE_DATA_LABELS=true
+      - DATABASE_SAVE_DATA_HISTORIC=true
+
+      # ---- Cache (Redis) ----
+      - CACHE_REDIS_ENABLED=true
+      - CACHE_REDIS_URI=redis://redis:6379/6
+      - CACHE_REDIS_PREFIX_KEY=evolution
+      - CACHE_REDIS_SAVE_INSTANCES=false
+      - CACHE_LOCAL_ENABLED=false
+
+      # ---- Logs ----
+      - LOG_LEVEL=ERROR,WARN,INFO
+      - LOG_COLOR=true
+    networks:
+      - chatbot-net
+
+  # -------------------------------------------------------------------
+  # n8n — plataforma de automação (workflow do chatbot)
+  # Editor: http://localhost:5678
+  # -------------------------------------------------------------------
+  n8n:
+    container_name: n8n
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5678:5678"
     volumes:
       - n8n_data:/home/node/.n8n
-    networks:
-      - dentbot-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  # ── 4. Evolution API ──────────────────────────────────────────────────────────
-  evolution-api:
-    image: atendai/evolution-api:latest
-    container_name: dentbot_evolution
-    restart: unless-stopped
-    ports:
-      - "${EVOLUTION_PORT}:8080"
     environment:
-      SERVER_TYPE: http
-      SERVER_PORT: 8080
-      # Autenticação
-      AUTHENTICATION_TYPE: apikey
-      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY}
-      # Banco de dados
-      DATABASE_ENABLED: "true"
-      DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      DATABASE_CONNECTION_CLIENT_NAME: evolution_api
-      # Redis (fila de mensagens)
-      CACHE_REDIS_ENABLED: "true"
-      CACHE_REDIS_URI: redis://redis:6379/6
-      CACHE_REDIS_PREFIX_KEY: evolution
-      CACHE_LOCAL_ENABLED: "false"
-      # Webhook para o n8n — dispara a cada mensagem recebida no WhatsApp
-      WEBHOOK_GLOBAL_URL: http://n8n:5678/webhook/whatsapp
-      WEBHOOK_GLOBAL_ENABLED: "true"
-      WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS: "false"
-      WEBHOOK_EVENTS_MESSAGES_UPSERT: "true"
-      WEBHOOK_EVENTS_MESSAGES_UPDATE: "true"
-      WEBHOOK_EVENTS_CONNECTION_UPDATE: "true"
-      # Armazenamento
-      STORE_MESSAGES: "true"
-      STORE_MESSAGE_UP: "true"
-      STORE_CONTACTS: "true"
-      # Log
-      LOG_LEVEL: ERROR
-      LOG_COLOR: "true"
-      TZ: America/Sao_Paulo
-    volumes:
-      - evolution_data:/evolution/instances
+      # ---- Banco de dados (Postgres) ----
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+
+      # ---- Segurança ----
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_SECURE_COOKIE=false   # true em produção com HTTPS
+
+      # ---- URLs (importantes para webhooks) ----
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL}
+
+      # ---- Localização ----
+      - GENERIC_TIMEZONE=America/Sao_Paulo
+      - TZ=America/Sao_Paulo
     networks:
-      - dentbot-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - chatbot-net
+
+volumes:
+  postgres_data:
+  redis_data:
+  evolution_instances:
+  n8n_data:
+
+networks:
+  chatbot-net:
+    name: chatbot-net
+    driver: bridge
